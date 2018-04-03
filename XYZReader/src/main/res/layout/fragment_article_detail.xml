@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <FrameLayout
+        <android.support.design.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -88,17 +88,19 @@
                     android:lineSpacingMultiplier="@fraction/detail_body_line_spacing_multiplier" />
 
             </com.example.xyzreader.ui.MaxWidthLinearLayout>
-        </FrameLayout>
-    </com.example.xyzreader.ui.ObservableScrollView>
+            <android.support.design.widget.FloatingActionButton android:id="@+id/share_fab"
+                app:fabSize="normal"
+                android:layout_marginRight="@dimen/fab_margin"
+                android:layout_marginBottom="@dimen/fab_margin"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_share"
+                android:contentDescription="@string/action_share"
+                app:layout_anchor="@+id/meta_bar"
+                app:layout_anchorGravity="top|right"/>
+        </android.support.design.widget.CoordinatorLayout>
 
-    <android.support.design.widget.FloatingActionButton android:id="@+id/share_fab"
-        app:fabSize="normal"
-        android:layout_gravity="bottom|end"
-        android:layout_marginRight="@dimen/fab_margin"
-        android:layout_marginBottom="@dimen/fab_margin"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:src="@drawable/ic_share"
-        android:contentDescription="@string/action_share" />
+
+    </com.example.xyzreader.ui.ObservableScrollView>
 
 </com.example.xyzreader.ui.DrawInsetsFrameLayout>

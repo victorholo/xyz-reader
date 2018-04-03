@@ -42,6 +42,10 @@ public class ArticleDetailActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_detail);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            postponeEnterTransition();
+        }
+
         getSupportLoaderManager().initLoader(0, null, this);
         mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -57,9 +61,7 @@ public class ArticleDetailActivity extends AppCompatActivity
                 mSelectedItemId = mStartId;
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            postponeEnterTransition();
-        }
+
 
     }
 
@@ -127,7 +129,12 @@ public class ArticleDetailActivity extends AppCompatActivity
         @Override
         public android.support.v4.app.Fragment getItem(int position) {
             mCursor.moveToPosition(position);
-            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID));
+            long cursorId = mCursor.getLong(ArticleLoader.Query._ID);
+            if(mStartId == cursorId) {
+                return ArticleDetailFragment.newInstance(cursorId, mCursor.getString(ArticleLoader.Query.TITLE));
+            }else{
+                return ArticleDetailFragment.newInstance(cursorId, null);
+            }
         }
 
         @Override

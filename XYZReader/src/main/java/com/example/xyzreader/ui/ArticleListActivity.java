@@ -32,7 +32,6 @@ import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
-import com.example.xyzreader.utils.TransitionHelper;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -76,7 +75,8 @@ public class ArticleListActivity extends AppCompatActivity implements
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refresh();
+                if(mRecyclerView.getChildCount() == 0) refresh();
+                else mSwipeRefreshLayout.setRefreshing(mIsRefreshing = false);
             }
         });
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -89,7 +89,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         mRecyclerView.setLayoutManager(sglm);
 
         if (savedInstanceState == null) {
-            refresh();
+            if(mRecyclerView.getChildCount() == 0) refresh();
         }
 
     }
