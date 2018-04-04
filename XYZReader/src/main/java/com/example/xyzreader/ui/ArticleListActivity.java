@@ -25,6 +25,8 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -67,7 +69,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_list);
 
-        mToolbar = findViewById(R.id.toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
@@ -75,8 +77,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if(mRecyclerView.getChildCount() == 0) refresh();
-                else mSwipeRefreshLayout.setRefreshing(mIsRefreshing = false);
+                refresh();
             }
         });
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -89,7 +90,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         mRecyclerView.setLayoutManager(sglm);
 
         if (savedInstanceState == null) {
-            if(mRecyclerView.getChildCount() == 0) refresh();
+            refresh();
         }
 
     }
@@ -136,7 +137,7 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        mAdapter.swapCursors(cursor);
+         mAdapter.swapCursors(cursor);
     }
 
     @Override
@@ -146,14 +147,17 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     private class Adapter extends RecyclerView.Adapter<ViewHolder> {
         private Cursor mCursor;
+        private int lastPosition = -1;
 
         public Adapter() {
 
         }
 
         public void swapCursors(Cursor cursor) {
-            mCursor = cursor;
-            notifyDataSetChanged();
+           // if(mCursor == null) {
+                mCursor = cursor;
+                notifyDataSetChanged();
+           // }
         }
 
         @Override
@@ -166,6 +170,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = getLayoutInflater().inflate(R.layout.list_item_article, parent, false);
             final ViewHolder vh = new ViewHolder(view);
+            vh.itemView.setVisibility(View.GONE);
             return vh;
         }
 
@@ -203,6 +208,7 @@ public class ArticleListActivity extends AppCompatActivity implements
                                 + "<br/>" + " by "
                                 + mCursor.getString(ArticleLoader.Query.AUTHOR)));
             }
+
             Picasso.get().load(mCursor.getString(ArticleLoader.Query.THUMB_URL)).into(new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -212,6 +218,8 @@ public class ArticleListActivity extends AppCompatActivity implements
                     int bgColor = p.getDarkMutedColor(0xFF333333);
                     holder.titleView.setBackgroundColor(bgColor);
                     holder.subtitleView.setBackgroundColor(bgColor);
+                    holder.itemView.setVisibility(View.VISIBLE);
+                    setAnimation(holder.itemView, mCursor.getPosition());
                 }
 
 
@@ -230,11 +238,27 @@ public class ArticleListActivity extends AppCompatActivity implements
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    Log.v(TAG, holder.thumbnailView.getTransitionName());
                     Intent intent = new Intent(Intent.ACTION_VIEW, ItemsContract.Items.buildItemUri(getItemId(finalPosition)));
                     Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(ArticleListActivity.this, holder.thumbnailView, holder.thumbnailView.getTransitionName()).toBundle();
                     startActivity(intent, bundle);
                 }
             });
+
+        }
+
+        /**
+         * Here is the key method to apply the animation
+         */
+        private void setAnimation(View viewToAnimate, int position)
+        {
+            // If the bound view wasn't previously displayed on screen, it's animated
+            if (position > lastPosition)
+            {
+                Animation animation = AnimationUtils.loadAnimation(ArticleListActivity.this, R.anim.slide_top);
+                viewToAnimate.startAnimation(animation);
+                lastPosition = position;
+            }
         }
 
         @Override
@@ -251,9 +275,9 @@ public class ArticleListActivity extends AppCompatActivity implements
 
         public ViewHolder(View view) {
             super(view);
-            thumbnailView = view.findViewById(R.id.thumbnail);
-            titleView = view.findViewById(R.id.article_title);
-            subtitleView = view.findViewById(R.id.article_subtitle);
+            thumbnailView = (ImageView) view.findViewById(R.id.thumbnail);
+            titleView = (TextView) view.findViewById(R.id.article_title);
+            subtitleView = (TextView) view.findViewById(R.id.article_subtitle);
         }
     }
 }

@@ -43,6 +43,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.Transformation;
+import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -58,7 +59,7 @@ import com.squareup.picasso.Target;
  * either contained in a {@link ArticleListActivity} in two-pane mode (on
  * tablets) or a {@link ArticleDetailActivity} on handsets.
  */
-public class ArticleDetailFragment extends Fragment implements android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>{
+public class ArticleDetailFragment extends Fragment implements android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
     private static final String TAG = "ArticleDetailFragment";
 
     public static final String ARG_ITEM_ID = "item_id";
@@ -88,6 +89,7 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
     // Most time functions can only handle 1902 - 2037
     private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2, 1, 1);
 
+    private LinearLayout mLinearLayout;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -95,7 +97,7 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
     public ArticleDetailFragment() {
     }
 
-    public static ArticleDetailFragment newInstance(long itemId, @Nullable String transitionName) {
+    public static ArticleDetailFragment newInstance(long itemId, String transitionName) {
         Bundle arguments = new Bundle();
         arguments.putLong(ARG_ITEM_ID, itemId);
         arguments.putString(ARG_TRANSITION_NAME, transitionName);
@@ -113,23 +115,14 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
         }
 
         if (getArguments().containsKey(ARG_TRANSITION_NAME)) {
-            mTransitionName = getArguments().getString(ARG_TRANSITION_NAME);
-
-        }
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP && mTransitionName == null) {
-            setEnterSharedElementCallback(new SharedElementCallback() {
-                @Override
-                public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
-                        sharedElements.clear(); // This will reject the transition
-                    }
-            });
+            String transition = getArguments().getString(ARG_TRANSITION_NAME);
+            if (transition != null) mTransitionName = transition;
         }
 
         mIsCard = getResources().getBoolean(R.bool.detail_is_card);
         mStatusBarFullOpacityBottom = getResources().getDimensionPixelSize(
                 R.dimen.detail_card_top_margin);
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
 
     }
 
@@ -159,7 +152,7 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
             // setSharedElementEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(android.R.transition.slide_bottom));
             //setEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(R.transition.slide_up));
             setSharedElementReturnTransition(null);
-            addTransitionListener();
+          //  addTransitionListener();
         }
 
         mDrawInsetsFrameLayout.setOnInsetsCallback(new DrawInsetsFrameLayout.OnInsetsCallback() {
@@ -176,7 +169,7 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
                 mScrollY = mScrollView.getScrollY();
                 getActivityCast().onToolbarFloorChanged(mItemId, ArticleDetailFragment.this);
                 mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
-                updateStatusBar();
+                //updateStatusBar();
             }
         });
 
@@ -186,7 +179,8 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
 
         mStatusBarColorDrawable = new ColorDrawable(0);
 
-        mFab = mRootView.findViewById(R.id.share_fab);
+        mLinearLayout = (LinearLayout) mRootView.findViewById(R.id.linearLayout);
+        mFab = (FloatingActionButton) mRootView.findViewById(R.id.share_fab);
 
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -199,37 +193,8 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
         });
 
         bindViews();
-        updateStatusBar();
+        // updateStatusBar();
         return mRootView;
-    }
-
-    private void updateStatusBar() {
-        int color = 0;
-        if (mPhotoView != null && mTopInset != 0 && mScrollY > 0) {
-            float f = progress(mScrollY,
-                    mStatusBarFullOpacityBottom - mTopInset * 3,
-                    mStatusBarFullOpacityBottom - mTopInset);
-            color = Color.argb((int) (255 * f),
-                    (int) (Color.red(mMutedColor) * 0.9),
-                    (int) (Color.green(mMutedColor) * 0.9),
-                    (int) (Color.blue(mMutedColor) * 0.9));
-        }
-        mStatusBarColorDrawable.setColor(color);
-        mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
-    }
-
-    static float progress(float v, float min, float max) {
-        return constrain((v - min) / (max - min), 0, 1);
-    }
-
-    static float constrain(float val, float min, float max) {
-        if (val < min) {
-            return min;
-        } else if (val > max) {
-            return max;
-        } else {
-            return val;
-        }
     }
 
     private Date parsePublishedDate() {
@@ -254,7 +219,7 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
         TextView bodyView = (TextView) mRootView.findViewById(R.id.article_body);
 
 
-        final LinearLayout linearLayout = mRootView.findViewById(R.id.meta_bar);
+        final LinearLayout linearLayout = (LinearLayout) mRootView.findViewById(R.id.meta_bar);
         if (mCursor != null) {
             mRootView.setAlpha(1);
             mRootView.setVisibility(View.VISIBLE);
@@ -284,17 +249,21 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
 
             bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mTransitionName != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                //Log.v(TAG, titleView.getText().toString());
                 mPhotoView.setTransitionName(titleView.getText().toString());
                 Picasso.get().load(mCursor.getString(ArticleLoader.Query.THUMB_URL)).noFade().into(mPhotoView, new Callback() {
                     @Override
                     public void onSuccess() {
-                        scheduleEnterTransition(mPhotoView);
                         Bitmap bitmap = ((BitmapDrawable) mPhotoView.getDrawable()).getBitmap();
                         Palette p = Palette.from(bitmap).generate();
                         int bgColor = p.getDarkMutedColor(0xFF333333);
                         linearLayout.setBackgroundColor(bgColor);
+                        scheduleEnterTransition(mPhotoView);
+                        //slideUp(mLinearLayout);
+                        //addTransitionListener();
                         Picasso.get().load(mCursor.getString(ArticleLoader.Query.PHOTO_URL)).noFade().into(mPhotoView);
+
                     }
 
                     @Override
@@ -302,9 +271,6 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
                         scheduleEnterTransition(mPhotoView);
                     }
                 });
-            } else {
-                Picasso.get().load(mCursor.getString(ArticleLoader.Query.PHOTO_URL)).into(mPhotoView);
-                scheduleEnterTransition(mPhotoView);
             }
         } else {
             mRootView.setVisibility(View.GONE);
@@ -320,6 +286,12 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
         return ArticleLoader.newInstanceForItemId(getActivity(), mItemId);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        getLoaderManager().destroyLoader(0);
+        Picasso.get().cancelRequest(mPhotoView);
+    }
 
     private void scheduleEnterTransition(final View view) {
 
@@ -330,10 +302,13 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
                         view.getViewTreeObserver().removeOnPreDrawListener(this);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             getActivity().startPostponedEnterTransition();
+                            addTransitionListener();
+
                         }
                         return true;
                     }
                 });
+
     }
 
     @Override
@@ -372,34 +347,6 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
                 : mPhotoView.getHeight() - mScrollY;
     }
 
-    private void animateViewIn(final View v){
-        final int height = v.getMeasuredHeight();
-        int duration = (int) 300;
-
-        Animation animation = new Animation() {
-            @Override
-            protected void applyTransformation(float interpolatedTime, Transformation t) {
-                v.getLayoutParams().height = 1;
-                v.setVisibility(View.VISIBLE);
-                if (interpolatedTime == 1) {
-                    v.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                } else {
-                    v.getLayoutParams().height = (int) (height * interpolatedTime);
-                }
-                v.requestLayout();
-            }
-
-            @Override
-            public boolean willChangeBounds() {
-                return true;
-            }
-        };
-
-        animation.setInterpolator(new AccelerateDecelerateInterpolator());
-        animation.setDuration(duration);
-        v.startAnimation(animation);
-    }
-
     private boolean addTransitionListener() {
         final Transition transition = getActivity().getWindow().getSharedElementEnterTransition();
 
@@ -408,7 +355,7 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
             transition.addListener(new Transition.TransitionListener() {
                 @Override
                 public void onTransitionEnd(Transition transition) {
-                    if(mTransitionName != null) animateViewIn(mFab);
+                   // slideUp(mLinearLayout);
                     Log.e(TAG, "transition_end - " + mTransitionName);
                     // Make sure we remove ourselves as a listener
                     transition.removeListener(this);
@@ -416,13 +363,14 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
 
                 @Override
                 public void onTransitionStart(Transition transition) {
-                    if(mTransitionName != null) mFab.setVisibility(View.INVISIBLE);
+                    Log.e(TAG, "transition_start - " + mTransitionName);
 
                 }
 
                 @Override
                 public void onTransitionCancel(Transition transition) {
                     // Make sure we remove ourselves as a listener
+                    Log.e(TAG, "transition_cancelled - " + mTransitionName);
                     transition.removeListener(this);
                 }
 

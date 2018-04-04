@@ -40,6 +40,7 @@
                 android:maxWidth="@dimen/detail_card_max_width"
                 android:background="#fff"
                 android:elevation="2dp"
+                android:id="@+id/linearLayout"
                 android:layout_marginTop="@dimen/detail_card_top_margin">
 
                 <LinearLayout
@@ -87,6 +88,7 @@
                     android:textSize="@dimen/detail_body_text_size"
                     android:lineSpacingMultiplier="@fraction/detail_body_line_spacing_multiplier" />
 
+
             </com.example.xyzreader.ui.MaxWidthLinearLayout>
             <android.support.design.widget.FloatingActionButton android:id="@+id/share_fab"
                 app:fabSize="normal"
@@ -97,7 +99,7 @@
                 android:src="@drawable/ic_share"
                 android:contentDescription="@string/action_share"
                 app:layout_anchor="@+id/meta_bar"
-                app:layout_anchorGravity="top|right"/>
+                app:layout_anchorGravity="bottom|right"/>
         </android.support.design.widget.CoordinatorLayout>
 
 
