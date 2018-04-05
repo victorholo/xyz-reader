@@ -3,14 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="@dimen/list_item_padding"
-    android:layout_marginTop="@dimen/list_item_padding"
     android:layout_marginLeft="@dimen/list_item_padding"
     android:layout_marginRight="@dimen/list_item_padding"
+    android:layout_marginTop="@dimen/list_item_padding"
+    android:background="@android:color/white"
     android:clickable="true"
     android:focusable="true"
-    android:background="@android:color/white"
     android:foreground="?selectableItemBackground"
-    app:cardCornerRadius="2dp">
+    android:stateListAnimator="@animator/fab_pressed_translator"
+    app:cardCornerRadius="2dp"
+    app:cardElevation="2dp"
+    app:cardMaxElevation="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,35 +23,35 @@
         <ImageView
             android:id="@+id/thumbnail"
             android:layout_width="match_parent"
-            android:scaleType="centerInside"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
-            android:background="@color/photo_placeholder"/>
+            android:background="@color/photo_placeholder"
+            android:scaleType="centerInside" />
 
-            <TextView
-                android:id="@+id/article_title"
-                style="@style/TextAppearance.AppCompat.Subhead"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="4"
-                android:paddingBottom="8dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:textColor="@android:color/white"
-                android:paddingTop="16dp" />
+        <TextView
+            android:id="@+id/article_title"
+            style="@style/TextAppearance.AppCompat.Subhead"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="4"
+            android:paddingBottom="8dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="16dp"
+            android:textColor="@android:color/white" />
 
-            <TextView
-                android:id="@+id/article_subtitle"
-                style="@style/TextAppearance.AppCompat.Caption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:textColor="@android:color/white"
-                android:paddingBottom="16dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/article_subtitle"
+            style="@style/TextAppearance.AppCompat.Caption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:paddingBottom="16dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
 
 </android.support.v7.widget.CardView>

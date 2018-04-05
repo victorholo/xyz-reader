@@ -7,12 +7,11 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v4.util.Pair;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -52,35 +51,34 @@ public class ArticleListActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = ArticleListActivity.class.toString();
-    private Toolbar mToolbar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mRecyclerView;
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
-    private SimpleDateFormat outputFormat = new SimpleDateFormat();
+    private final SimpleDateFormat outputFormat = new SimpleDateFormat();
     // Most time functions can only handle 1902 - 2037
-    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2, 1, 1);
+    private final GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2, 1, 1);
 
-    Adapter mAdapter;
+    private Adapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_list);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 refresh();
             }
         });
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        mRecyclerView = findViewById(R.id.recycler_view);
         getSupportLoaderManager().initLoader(0, null, this);
 
         mAdapter = new Adapter();
@@ -114,13 +112,12 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     private boolean mIsRefreshing = false;
 
-    private BroadcastReceiver mRefreshingReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mRefreshingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (UpdaterService.BROADCAST_ACTION_STATE_CHANGE.equals(intent.getAction())) {
                 mIsRefreshing = intent.getBooleanExtra(UpdaterService.EXTRA_REFRESHING, false);
                 updateRefreshingUI();
-                //refresh();
             }
         }
     };
@@ -128,6 +125,9 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     private void updateRefreshingUI() {
         mSwipeRefreshLayout.setRefreshing(mIsRefreshing);
+        if (!mIsRefreshing && mRecyclerView.getChildCount() > 0) {
+            Snackbar.make(findViewById(R.id.coordinator), "List loaded succesfully", Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -137,7 +137,7 @@ public class ArticleListActivity extends AppCompatActivity implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-         mAdapter.swapCursors(cursor);
+        mAdapter.swapCursors(cursor);
     }
 
     @Override
@@ -149,15 +149,13 @@ public class ArticleListActivity extends AppCompatActivity implements
         private Cursor mCursor;
         private int lastPosition = -1;
 
-        public Adapter() {
+        Adapter() {
 
         }
 
-        public void swapCursors(Cursor cursor) {
-           // if(mCursor == null) {
-                mCursor = cursor;
-                notifyDataSetChanged();
-           // }
+        void swapCursors(Cursor cursor) {
+            mCursor = cursor;
+            notifyDataSetChanged();
         }
 
         @Override
@@ -238,10 +236,13 @@ public class ArticleListActivity extends AppCompatActivity implements
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Log.v(TAG, holder.thumbnailView.getTransitionName());
                     Intent intent = new Intent(Intent.ACTION_VIEW, ItemsContract.Items.buildItemUri(getItemId(finalPosition)));
-                    Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(ArticleListActivity.this, holder.thumbnailView, holder.thumbnailView.getTransitionName()).toBundle();
-                    startActivity(intent, bundle);
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(ArticleListActivity.this, holder.thumbnailView, holder.thumbnailView.getTransitionName()).toBundle();
+                        startActivity(intent, bundle);
+                    }else startActivity(intent);
+
                 }
             });
 
@@ -250,11 +251,9 @@ public class ArticleListActivity extends AppCompatActivity implements
         /**
          * Here is the key method to apply the animation
          */
-        private void setAnimation(View viewToAnimate, int position)
-        {
+        private void setAnimation(View viewToAnimate, int position) {
             // If the bound view wasn't previously displayed on screen, it's animated
-            if (position > lastPosition)
-            {
+            if (position > lastPosition) {
                 Animation animation = AnimationUtils.loadAnimation(ArticleListActivity.this, R.anim.slide_top);
                 viewToAnimate.startAnimation(animation);
                 lastPosition = position;
@@ -269,15 +268,15 @@ public class ArticleListActivity extends AppCompatActivity implements
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ImageView thumbnailView;
-        public TextView titleView;
-        public TextView subtitleView;
+        final ImageView thumbnailView;
+        final TextView titleView;
+        final TextView subtitleView;
 
-        public ViewHolder(View view) {
+        ViewHolder(View view) {
             super(view);
-            thumbnailView = (ImageView) view.findViewById(R.id.thumbnail);
-            titleView = (TextView) view.findViewById(R.id.article_title);
-            subtitleView = (TextView) view.findViewById(R.id.article_subtitle);
+            thumbnailView = view.findViewById(R.id.thumbnail);
+            titleView = view.findViewById(R.id.article_title);
+            subtitleView = view.findViewById(R.id.article_subtitle);
         }
     }
 }

@@ -2,7 +2,6 @@ package com.example.xyzreader.ui;
 
 
 import android.database.Cursor;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -13,11 +12,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.transition.Transition;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.MenuItem;
-import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.xyzreader.R;
@@ -39,7 +34,7 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     private ViewPager mPager;
     private MyPagerAdapter mPagerAdapter;
-    Toolbar mToolbar;
+    private Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,14 +45,13 @@ public class ArticleDetailActivity extends AppCompatActivity
         setContentView(R.layout.activity_article_detail);
 
         getSupportLoaderManager().initLoader(0, null, this);
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar = findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         mPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
-        mPager = (ViewPager) findViewById(R.id.pager);
+        mPager = findViewById(R.id.pager);
         mPager.setAdapter(mPagerAdapter);
-        mPager.setOffscreenPageLimit(1);
         if (savedInstanceState == null) {
             if (getIntent() != null && getIntent().getData() != null) {
                 Log.v("ArticleDetailActivity", "intent");
@@ -65,20 +59,6 @@ public class ArticleDetailActivity extends AppCompatActivity
                 mSelectedItemId = mStartId;
             }
         }
-
-//        if (savedInstanceState == null) {
-//            if (getIntent() != null && getIntent().getData() != null) {
-//                mStartId = ItemsContract.Items.getItemId(getIntent().getData());
-//                mSelectedItemId = mStartId;
-//                ArticleDetailFragment articleDetailFragment = ArticleDetailFragment.newInstance(mStartId);
-//                FragmentManager fragmentManager = getSupportFragmentManager();
-//                fragmentManager.beginTransaction().add(R.id.container, articleDetailFragment).commit();
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//                    postponeEnterTransition();
-//                }
-//
-//            }
-
     }
 
     @Override
@@ -87,10 +67,10 @@ public class ArticleDetailActivity extends AppCompatActivity
     }
 
 
-
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         mCursor = cursor;
+        mPagerAdapter.notifyDataSetChanged();
 
         // Select the start ID
         if (mStartId > 0) {
@@ -129,7 +109,7 @@ public class ArticleDetailActivity extends AppCompatActivity
     }
 
     private class MyPagerAdapter extends FragmentPagerAdapter {
-        public MyPagerAdapter(FragmentManager fm) {
+        MyPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
@@ -147,15 +127,16 @@ public class ArticleDetailActivity extends AppCompatActivity
         public android.support.v4.app.Fragment getItem(int position) {
             mCursor.moveToPosition(position);
             long cursorId = mCursor.getLong(ArticleLoader.Query._ID);
-            if(mStartId == cursorId) {
+            if (mStartId == cursorId) {
                 return ArticleDetailFragment.newInstance(cursorId, mCursor.getString(ArticleLoader.Query.TITLE));
-            }else{
+            } else {
                 return ArticleDetailFragment.newInstance(cursorId, "");
             }
         }
 
         @Override
         public int getCount() {
+
             return (mCursor != null) ? mCursor.getCount() : 0;
         }
     }
@@ -168,7 +149,6 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        //super.onBackPressed();
         NavUtils.navigateUpFromSameTask(this);
     }
 }

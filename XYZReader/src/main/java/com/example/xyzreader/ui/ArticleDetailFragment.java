@@ -4,46 +4,28 @@ package com.example.xyzreader.ui;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Map;
 
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ShareCompat;
-import android.support.v4.app.SharedElementCallback;
 import android.support.v4.content.Loader;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
-import android.transition.Transition;
-import android.transition.TransitionInflater;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
-import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -52,7 +34,6 @@ import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 /**
  * A fragment representing a single Article detail screen. This fragment is
@@ -60,36 +41,31 @@ import com.squareup.picasso.Target;
  * tablets) or a {@link ArticleDetailActivity} on handsets.
  */
 public class ArticleDetailFragment extends Fragment implements android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
+
     private static final String TAG = "ArticleDetailFragment";
 
-    public static final String ARG_ITEM_ID = "item_id";
-    public static final String ARG_TRANSITION_NAME = "transition_name";
+    private static final String ARG_ITEM_ID = "item_id";
+    private static final String ARG_TRANSITION_NAME = "transition_name";
     private static final float PARALLAX_FACTOR = 1.25f;
 
-    String mTransitionName = null;
     private Cursor mCursor;
     private long mItemId;
     private View mRootView;
-    private FloatingActionButton mFab;
-    private int mMutedColor = 0xFF333333;
     private ObservableScrollView mScrollView;
-    private DrawInsetsFrameLayout mDrawInsetsFrameLayout;
-    private ColorDrawable mStatusBarColorDrawable;
 
-    private int mTopInset;
     private View mPhotoContainerView;
     private ImageView mPhotoView;
     private int mScrollY;
     private boolean mIsCard = false;
-    private int mStatusBarFullOpacityBottom;
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
-    private SimpleDateFormat outputFormat = new SimpleDateFormat();
+    private final SimpleDateFormat outputFormat = new SimpleDateFormat();
     // Most time functions can only handle 1902 - 2037
-    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2, 1, 1);
+    private final GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2, 1, 1);
 
-    private LinearLayout mLinearLayout;
+    private String mBodyText;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -116,17 +92,15 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
 
         if (getArguments().containsKey(ARG_TRANSITION_NAME)) {
             String transition = getArguments().getString(ARG_TRANSITION_NAME);
+            String mTransitionName = null;
             if (transition != null) mTransitionName = transition;
         }
 
         mIsCard = getResources().getBoolean(R.bool.detail_is_card);
-        mStatusBarFullOpacityBottom = getResources().getDimensionPixelSize(
-                R.dimen.detail_card_top_margin);
-        //setHasOptionsMenu(true);
 
     }
 
-    public ArticleDetailActivity getActivityCast() {
+    private ArticleDetailActivity getActivityCast() {
         return (ArticleDetailActivity) getActivity();
     }
 
@@ -145,42 +119,27 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.fragment_article_detail, container, false);
-        mDrawInsetsFrameLayout = (DrawInsetsFrameLayout)
-                mRootView.findViewById(R.id.draw_insets_frame_layout);
+        DrawInsetsFrameLayout mDrawInsetsFrameLayout = mRootView.findViewById(R.id.draw_insets_frame_layout);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // setSharedElementEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(android.R.transition.slide_bottom));
-            //setEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(R.transition.slide_up));
             setSharedElementReturnTransition(null);
-          //  addTransitionListener();
         }
 
-        mDrawInsetsFrameLayout.setOnInsetsCallback(new DrawInsetsFrameLayout.OnInsetsCallback() {
-            @Override
-            public void onInsetsChanged(Rect insets) {
-                mTopInset = insets.top;
-            }
-        });
-
-        mScrollView = (ObservableScrollView) mRootView.findViewById(R.id.scrollview);
+        mScrollView = mRootView.findViewById(R.id.scrollview);
         mScrollView.setCallbacks(new ObservableScrollView.Callbacks() {
             @Override
             public void onScrollChanged() {
                 mScrollY = mScrollView.getScrollY();
                 getActivityCast().onToolbarFloorChanged(mItemId, ArticleDetailFragment.this);
                 mPhotoContainerView.setTranslationY((int) (mScrollY - mScrollY / PARALLAX_FACTOR));
-                //updateStatusBar();
             }
         });
 
-        mPhotoView = (ImageView) mRootView.findViewById(R.id.photo);
+        mPhotoView = mRootView.findViewById(R.id.photo);
 
         mPhotoContainerView = mRootView.findViewById(R.id.photo_container);
 
-        mStatusBarColorDrawable = new ColorDrawable(0);
-
-        mLinearLayout = (LinearLayout) mRootView.findViewById(R.id.linearLayout);
-        mFab = (FloatingActionButton) mRootView.findViewById(R.id.share_fab);
+        FloatingActionButton mFab = mRootView.findViewById(R.id.share_fab);
 
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -193,7 +152,6 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
         });
 
         bindViews();
-        // updateStatusBar();
         return mRootView;
     }
 
@@ -213,13 +171,13 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
             return;
         }
 
-        TextView titleView = (TextView) mRootView.findViewById(R.id.article_title);
-        TextView bylineView = (TextView) mRootView.findViewById(R.id.article_byline);
+        TextView titleView = mRootView.findViewById(R.id.article_title);
+        TextView bylineView = mRootView.findViewById(R.id.article_byline);
         bylineView.setMovementMethod(new LinkMovementMethod());
-        TextView bodyView = (TextView) mRootView.findViewById(R.id.article_body);
+        final TextView bodyView = mRootView.findViewById(R.id.article_body);
 
 
-        final LinearLayout linearLayout = (LinearLayout) mRootView.findViewById(R.id.meta_bar);
+        final LinearLayout linearLayout = mRootView.findViewById(R.id.meta_bar);
         if (mCursor != null) {
             mRootView.setAlpha(1);
             mRootView.setVisibility(View.VISIBLE);
@@ -247,10 +205,18 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
             }
 
 
-            bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
+            mBodyText = mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />");
+            bodyView.setText(Html.fromHtml(mBodyText.substring(0, (mBodyText.length() <= 800 ? mBodyText.length() : 800))));
+
+            final TextView seeMore = mRootView.findViewById(R.id.see_more_textview);
+            seeMore.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    reSetBodyText(bodyView, seeMore);
+                }
+            });
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                //Log.v(TAG, titleView.getText().toString());
                 mPhotoView.setTransitionName(titleView.getText().toString());
                 Picasso.get().load(mCursor.getString(ArticleLoader.Query.THUMB_URL)).noFade().into(mPhotoView, new Callback() {
                     @Override
@@ -260,8 +226,6 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
                         int bgColor = p.getDarkMutedColor(0xFF333333);
                         linearLayout.setBackgroundColor(bgColor);
                         scheduleEnterTransition(mPhotoView);
-                        //slideUp(mLinearLayout);
-                        //addTransitionListener();
                         Picasso.get().load(mCursor.getString(ArticleLoader.Query.PHOTO_URL)).noFade().into(mPhotoView);
 
                     }
@@ -281,16 +245,20 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
 
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return ArticleLoader.newInstanceForItemId(getActivity(), mItemId);
+    private void reSetBodyText(TextView textView, TextView textButton) {
+        String text = textView.getText().toString();
+
+        if (text.length() < mBodyText.length()) textButton.setText(R.string.see_less_label);
+        else textButton.setText(R.string.see_more_label);
+
+        textView.setText(Html.fromHtml(mBodyText));
+        mBodyText = text;
+
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        getLoaderManager().destroyLoader(0);
-        Picasso.get().cancelRequest(mPhotoView);
+    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        return ArticleLoader.newInstanceForItemId(getActivity(), mItemId);
     }
 
     private void scheduleEnterTransition(final View view) {
@@ -302,8 +270,6 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
                         view.getViewTreeObserver().removeOnPreDrawListener(this);
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             getActivity().startPostponedEnterTransition();
-                            addTransitionListener();
-
                         }
                         return true;
                     }
@@ -345,49 +311,5 @@ public class ArticleDetailFragment extends Fragment implements android.support.v
         return mIsCard
                 ? (int) mPhotoContainerView.getTranslationY() + mPhotoView.getHeight() - mScrollY
                 : mPhotoView.getHeight() - mScrollY;
-    }
-
-    private boolean addTransitionListener() {
-        final Transition transition = getActivity().getWindow().getSharedElementEnterTransition();
-
-        if (transition != null) {
-            // There is an entering shared element transition so add a listener to it
-            transition.addListener(new Transition.TransitionListener() {
-                @Override
-                public void onTransitionEnd(Transition transition) {
-                   // slideUp(mLinearLayout);
-                    Log.e(TAG, "transition_end - " + mTransitionName);
-                    // Make sure we remove ourselves as a listener
-                    transition.removeListener(this);
-                }
-
-                @Override
-                public void onTransitionStart(Transition transition) {
-                    Log.e(TAG, "transition_start - " + mTransitionName);
-
-                }
-
-                @Override
-                public void onTransitionCancel(Transition transition) {
-                    // Make sure we remove ourselves as a listener
-                    Log.e(TAG, "transition_cancelled - " + mTransitionName);
-                    transition.removeListener(this);
-                }
-
-                @Override
-                public void onTransitionPause(Transition transition) {
-                    // No-op
-                }
-
-                @Override
-                public void onTransitionResume(Transition transition) {
-                    // No-op
-                }
-            });
-            return true;
-        }
-
-        // If we reach here then we have not added a listener
-        return false;
     }
 }
